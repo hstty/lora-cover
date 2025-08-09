@@ -33,6 +33,12 @@ SECTION_KEY = "lora_cover"
 SECTION_LABEL = "LoRA Cover Auto-Update"
 SECTION_ID = (SECTION_KEY, SECTION_LABEL)
 
+# Pillowのバージョン差異を吸収したLANCZOS定数
+try:  # Pillow>=9.1
+	RESAMPLE_LANCZOS = Image.Resampling.LANCZOS  # type: ignore[attr-defined]
+except Exception:  # Pillow旧版
+	RESAMPLE_LANCZOS = getattr(Image, "LANCZOS", getattr(Image, "BICUBIC", 3))
+
 
 def _get_models_root() -> Optional[str]:
 	"""models ルートパスを可能な範囲で推測して返す。"""
@@ -254,7 +260,7 @@ def _prepare_cover(img: PILImage, square_crop: bool, max_size: int) -> PILImage:
 			else:
 				new_h = max_size
 				new_w = int(w * (max_size / h))
-			img = img.resize((new_w, new_h), Image.LANCZOS)
+				img = img.resize((new_w, new_h), RESAMPLE_LANCZOS)
 	return img
 
 
@@ -344,67 +350,8 @@ def on_image_saved(params):  # script_callbacks.ImageSaveParams 想定
 
 
 def _register_options():
-	if shared is None:
-		return
-	try:
-		from modules.shared import OptionInfo  # type: ignore
-	except Exception:
-		return
-
-	# セクション作成APIがあれば先に作成
-	try:
-		add_section = getattr(shared.opts, "add_section", None)
-		if callable(add_section):
-			add_section(SECTION_KEY, SECTION_LABEL)
-	except Exception:
-		pass
-
-	# UI コンポーネントが利用不可でも最低限の登録は試行
-	def _comp_checkbox():
-		return gr.Checkbox if gr is not None else None
-
-	def _comp_dropdown():
-		return gr.Dropdown if gr is not None else None
-
-	def _comp_slider():
-		return gr.Slider if gr is not None else None
-
-	try:
-		shared.opts.add_option(
-			"lora_cover_enable",
-			OptionInfo(False, "LoRA表紙を生成画像で自動更新", _comp_checkbox(), section=SECTION_ID),
-		)
-		shared.opts.add_option(
-			"lora_cover_target",
-			OptionInfo(
-				"first",
-				"対象LoRAの選択(先頭/末尾/全部)",
-				 _comp_dropdown(),
-				{"choices": ["first", "last", "all"]},
-				section=SECTION_ID,
-			),
-		)
-		shared.opts.add_option(
-			"lora_cover_overwrite",
-			OptionInfo(True, "既存の表紙があっても上書きする", _comp_checkbox(), section=SECTION_ID),
-		)
-		shared.opts.add_option(
-			"lora_cover_square_crop",
-			OptionInfo(False, "表紙を正方形にセンタークロップ", _comp_checkbox(), section=SECTION_ID),
-		)
-		shared.opts.add_option(
-			"lora_cover_max_size",
-			OptionInfo(
-				0,
-				"最大辺サイズ(0で無効)",
-				 _comp_slider(),
-				{"minimum": 0, "maximum": 2048, "step": 1},
-				section=SECTION_ID,
-			),
-		)
-		print("[lora-cover] settings registered")
-	except Exception as e:
-		print(f"[lora-cover] failed to register settings: {e}")
+	# 設定タブへの登録は行わない（txt2imgアコーディオンのみ）
+	return
 
 
 def on_ui_settings():
@@ -419,13 +366,8 @@ def _register_callbacks():
 		script_callbacks.on_image_saved(on_image_saved)
 	except Exception as e:
 		print(f"[lora-cover] failed to register on_image_saved: {e}")
-	try:
-		script_callbacks.on_ui_settings(on_ui_settings)
-	except Exception as e:
-		print(f"[lora-cover] failed to register on_ui_settings: {e}")
 	# 手動UIなし
 
 
-# import 時に設定とコールバックを登録
-_register_options()
+# import 時にコールバックのみ登録
 _register_callbacks()
