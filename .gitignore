@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+*.egg
+*.env
+.env
+.venv
+venv/
+build/
+dist/
+*.log
+# VSCode
+.vscode/
+# OS
+.DS_Store
+Thumbs.db
+# Jupyter
+.ipynb_checkpoints/
+# その他
+*.bak
+*.tmp
