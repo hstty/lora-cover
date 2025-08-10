@@ -29,9 +29,7 @@ except Exception as e:  # pragma: no cover
 	shared = None  # type: ignore
 
 
-SECTION_KEY = "lora_cover"
-SECTION_LABEL = "LoRA Cover Auto-Update"
-SECTION_ID = (SECTION_KEY, SECTION_LABEL)
+# Settingsタブのセクションは使用しない
 
 # Pillowのバージョン差異を吸収したLANCZOS定数
 try:  # Pillow>=9.1
@@ -349,14 +347,7 @@ def on_image_saved(params):  # script_callbacks.ImageSaveParams 想定
 		print(f"[lora-cover] on_image_saved error: {e}")
 
 
-def _register_options():
-	# 設定タブへの登録は行わない（txt2imgアコーディオンのみ）
-	return
-
-
-def on_ui_settings():
-	# UI構築タイミングでも再登録を試みる（安全）
-	_register_options()
+# 設定タブへの登録は行わない
 
 
 def _register_callbacks():
